@@ -25,12 +25,16 @@
 package org.brickred.socialauth.plugin.twitter;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.Album;
 import org.brickred.socialauth.Photo;
@@ -38,8 +42,6 @@ import org.brickred.socialauth.plugin.AlbumsPlugin;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.ProviderSupport;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Album Plugin implementation for Twitter
@@ -69,26 +71,26 @@ public class AlbumsPluginImpl implements AlbumsPlugin, Serializable {
 		response = providerSupport.api(FEED_URL);
 		String respStr = response.getResponseBodyAsString(Constants.ENCODING);
 		LOG.fine("Feeds json string :: " + respStr);
-		JSONArray jarr = new JSONArray(respStr);
-		LOG.fine("Feeds count :: " + jarr.length());
+		JsonArray jarr = Json.createReader(new StringReader(respStr)).readArray();
+		LOG.fine("Feeds count :: " + jarr.size());
 
-		for (int i = 0; i < jarr.length(); i++) {
+		for (int i = 0; i < jarr.size(); i++) {
 			Album album = new Album();
-			JSONObject jobj = jarr.getJSONObject(i);
+			JsonObject jobj = jarr.getJsonObject(i);
 
-			if (jobj.has("user")) {
-				JSONObject userObj = jobj.getJSONObject("user");
+			if (jobj.containsKey("user")) {
+			    JsonObject userObj = jobj.getJsonObject("user");
 
-				if (jobj.has("entities")) {
-					JSONObject entitiesObj = jobj.getJSONObject("entities");
-					if (entitiesObj.has("media")) {
-						JSONObject mediaObj = entitiesObj.getJSONArray("media")
-								.getJSONObject(0);
-						if (mediaObj.has("type")
+				if (jobj.containsKey("entities")) {
+				    JsonObject entitiesObj = jobj.getJsonObject("entities");
+					if (entitiesObj.containsKey("media")) {
+					    JsonObject mediaObj = entitiesObj.getJsonArray("media")
+								.getJsonObject(0);
+						if (mediaObj.containsKey("type")
 								&& mediaObj.getString("type").equalsIgnoreCase(
 										"photo")) {
-							if (userObj.has("name")
-									&& mediaObj.has("media_url")) {
+							if (userObj.containsKey("name")
+									&& mediaObj.containsKey("media_url")) {
 								List<Photo> photos = photo_data.get(userObj
 										.getString("name"));
 								if (photos == null) {
@@ -109,17 +111,17 @@ public class AlbumsPluginImpl implements AlbumsPlugin, Serializable {
 								photo.setSmallImage(photoURL + ":small");
 								photo.setMediumImage(photoURL);
 								photo.setLargeImage(photoURL + ":large");
-								if (jobj.has("text")) {
+								if (jobj.containsKey("text")) {
 									photo.setTitle(jobj.getString("text"));
 								}
-								if (mediaObj.has("id_str")) {
+								if (mediaObj.containsKey("id_str")) {
 									photo.setId(mediaObj.getString("id_str"));
 								}
-								if (mediaObj.has("expanded_url")) {
+								if (mediaObj.containsKey("expanded_url")) {
 									photo.setLink(mediaObj
 											.getString("expanded_url"));
 								}
-								if (jobj.has("retweet_count")) {
+								if (jobj.containsKey("retweet_count")) {
 									Map<String, String> map = new HashMap<String, String>();
 									map.put("retweet_count", String
 											.valueOf(jobj

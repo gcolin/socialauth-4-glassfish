@@ -1,6 +1,6 @@
 /*
  ===========================================================================
- Copyright (c) 2010 BrickRed Technologies Limited
+s Copyright (c) 2010 BrickRed Technologies Limited
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -27,13 +27,17 @@ package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.AuthProvider;
@@ -52,8 +56,6 @@ import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
 import org.brickred.socialauth.util.XMLParseUtil;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -217,31 +219,31 @@ public class YahooImpl extends AbstractProvider implements AuthProvider,
 					+ url, exc);
 		}
 		try {
-			JSONObject jobj = new JSONObject(result);
-			if (jobj.has("profile")) {
-				JSONObject pObj = jobj.getJSONObject("profile");
-				if (pObj.has("guid")) {
+			JsonObject jobj = Json.createReader(new StringReader(result)).readObject();
+			if (jobj.containsKey("profile")) {
+				JsonObject pObj = jobj.getJsonObject("profile");
+				if (pObj.containsKey("guid")) {
 					profile.setValidatedId(pObj.getString("guid"));
 				}
-				if (pObj.has("familyName")) {
+				if (pObj.containsKey("familyName")&&!pObj.isNull("familyName")) {
 					profile.setLastName(pObj.getString("familyName"));
 				}
-				if (pObj.has("gender")) {
+				if (pObj.containsKey("gender")&&!pObj.isNull("gender")) {
 					profile.setGender(pObj.getString("gender"));
 				}
-				if (pObj.has("givenName")) {
+				if (pObj.containsKey("givenName")&&!pObj.isNull("givenName")) {
 					profile.setFirstName(pObj.getString("givenName"));
 				}
-				if (pObj.has("location")) {
+				if (pObj.containsKey("location")&&!pObj.isNull("location")) {
 					profile.setLocation(pObj.getString("location"));
 				}
-				if (pObj.has("nickname")) {
+				if (pObj.containsKey("nickname")&&!pObj.isNull("nickname")) {
 					profile.setDisplayName(pObj.getString("nickname"));
 				}
-				if (pObj.has("lang")) {
+				if (pObj.containsKey("lang")&&!pObj.isNull("lang")) {
 					profile.setLanguage(pObj.getString("lang"));
 				}
-				if (pObj.has("birthdate")) {
+				if (pObj.containsKey("birthdate")&&!pObj.isNull("birthdate")) {
 					String dstr = pObj.getString("birthdate");
 					if (dstr != null) {
 						String arr[] = dstr.split("/");
@@ -255,19 +257,20 @@ public class YahooImpl extends AbstractProvider implements AuthProvider,
 						profile.setDob(bd);
 					}
 				}
-				if (pObj.has("image")) {
-					JSONObject imgObj = pObj.getJSONObject("image");
-					if (imgObj.has("imageUrl")) {
+				if (pObj.containsKey("image")&&!pObj.isNull("image")) {
+					JsonObject imgObj = pObj.getJsonObject("image");
+					if (imgObj.containsKey("imageUrl")) {
 						profile.setProfileImageURL(imgObj.getString("imageUrl"));
 					}
 				}
-				if (pObj.has("emails")) {
-					JSONArray earr = pObj.getJSONArray("emails");
-					for (int i = 0; i < earr.length(); i++) {
-						JSONObject eobj = earr.getJSONObject(i);
-						if (eobj.has("primary")
-								&& "true".equals(eobj.getString("primary"))) {
-							if (eobj.has("handle")) {
+				if (pObj.containsKey("emails")) {
+					JsonArray earr = pObj.getJsonArray("emails");
+					for (int i = 0; i < earr.size(); i++) {
+						JsonObject eobj = earr.getJsonObject(i);
+						if (eobj.containsKey("primary")
+						        && !eobj.isNull("primary")
+								&& eobj.getBoolean("primary")) {
+							if (eobj.containsKey("handle")&&!eobj.isNull("handle")) {
 								profile.setEmail(eobj.getString("handle"));
 							}
 							break;

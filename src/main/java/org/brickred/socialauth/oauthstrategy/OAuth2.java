@@ -27,12 +27,20 @@ package org.brickred.socialauth.oauthstrategy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
 
 import org.brickred.socialauth.Permission;
 import org.brickred.socialauth.exception.ProviderStateException;
@@ -44,8 +52,6 @@ import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.OAuthConsumer;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 
 public class OAuth2 implements OAuthStrategyBase {
 
@@ -202,27 +208,25 @@ public class OAuth2 implements OAuthStrategyBase {
 			}
 		} else {
 			try {
-				JSONObject jObj = new JSONObject(result);
-				if (jObj.has("access_token")) {
+			    
+			    JsonObject jObj = Json.createReader(new StringReader(result)).readObject();
+				if (jObj.containsKey("access_token")) {
 					accessToken = jObj.getString("access_token");
 				}
-				if (jObj.has("expires_in")) {
-					String str = jObj.getString("expires_in");
-					if (str != null && str.length() > 0) {
-						expires = Integer.valueOf(str);
-					}
+				if (jObj.containsKey("expires_in")) {
+				    expires = jObj.getJsonNumber("expires_in").intValue();
 				}
 				if (accessToken != null) {
-					Iterator<String> keyItr = jObj.keys();
-					while (keyItr.hasNext()) {
-						String key = keyItr.next();
-						if (!"access_token".equals(key)
-								&& !"expires_in".equals(key)) {
-							attributes.put(key, jObj.optString(key));
-						}
-					}
+				    for(Entry<String, JsonValue> entry:jObj.entrySet())
+				    {
+				        if (!"access_token".equals(entry.getKey())
+                                && !"expires_in".equals(entry.getKey())
+                                && entry.getValue().getValueType() == ValueType.STRING) {
+                            attributes.put(entry.getKey(), ((JsonString)entry.getValue()).getString());
+                        }
+				    }
 				}
-			} catch (JSONException je) {
+			} catch (JsonException je) {
 				throw new SocialAuthException("Unexpected auth response from "
 						+ authURL);
 			}

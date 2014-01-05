@@ -26,13 +26,17 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -47,8 +51,6 @@ import org.brickred.socialauth.util.AccessGrant;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Mendeley implementation of the provider.
@@ -196,18 +198,18 @@ public class MendeleyImpl extends AbstractProvider {
 					+ url, exc);
 		}
 		try {
-			JSONObject pRes = new JSONObject(result);
-			JSONObject pObj = pRes.getJSONObject("main");
-			if (pObj.has("profile_id")) {
+			JsonObject pRes = Json.createReader(new StringReader(result)).readObject();
+			JsonObject pObj = pRes.getJsonObject("main");
+			if (pObj.containsKey("profile_id")) {
 				profile.setValidatedId(pObj.getString("profile_id"));
 			}
-			if (pObj.has("name")) {
+			if (pObj.containsKey("name")) {
 				String name = pObj.getString("name");
 				if (name != null && name.trim().length() > 0) {
 					profile.setFirstName(pObj.getString("name"));
 				}
 			}
-			if (pObj.has("photo")) {
+			if (pObj.containsKey("photo")) {
 				String photo = pObj.getString("photo");
 				if (photo != null && photo.trim().length() > 0) {
 					profile.setProfileImageURL(pObj.getString("photo"));
@@ -267,10 +269,10 @@ public class MendeleyImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Contacts list in json : " + result);
-			JSONArray data = new JSONArray(result);
-			LOG.fine("Found contacts : " + data.length());
-			for (int i = 0; i < data.length(); i++) {
-				JSONObject obj = data.getJSONObject(i);
+			JsonArray data = Json.createReader(new StringReader(result)).readArray();;
+			LOG.fine("Found contacts : " + data.size());
+			for (int i = 0; i < data.size(); i++) {
+				JsonObject obj = data.getJsonObject(i);
 				Contact p = new Contact();
 				String name = obj.getString("name");
 				if (name != null) {

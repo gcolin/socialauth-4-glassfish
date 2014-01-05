@@ -26,13 +26,17 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -49,8 +53,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for Myspace
@@ -213,37 +215,37 @@ public class MySpaceImpl extends AbstractProvider {
 			throw new SocialAuthException("Failed to read contacts from  "
 					+ CONTACTS_URL, exc);
 		}
-		JSONArray fArr = new JSONArray();
-		JSONObject resObj = new JSONObject(result);
-		if (resObj.has("entry")) {
-			fArr = resObj.getJSONArray("entry");
+		JsonArray fArr = Json.createArrayBuilder().build();
+		JsonObject resObj = Json.createReader(new StringReader(result)).readObject();
+		if (resObj.containsKey("entry")) {
+			fArr = resObj.getJsonArray("entry");
 		} else {
 			throw new ServerDataException(
 					"Failed to parse the user Contacts json : " + result);
 		}
 		List<Contact> plist = new ArrayList<Contact>();
-		for (int i = 0; i < fArr.length(); i++) {
-			JSONObject fObj = fArr.getJSONObject(i);
-			if (fObj.has("person")) {
+		for (int i = 0; i < fArr.size(); i++) {
+			JsonObject fObj = fArr.getJsonObject(i);
+			if (fObj.containsKey("person")) {
 				Contact contact = new Contact();
-				JSONObject pObj = fObj.getJSONObject("person");
-				if (pObj.has("displayName")) {
+				JsonObject pObj = fObj.getJsonObject("person");
+				if (pObj.containsKey("displayName")) {
 					contact.setDisplayName(pObj.getString("displayName"));
 				}
-				if (pObj.has("name")) {
-					JSONObject nobj = pObj.getJSONObject("name");
-					if (nobj.has("familyName")) {
+				if (pObj.containsKey("name")) {
+					JsonObject nobj = pObj.getJsonObject("name");
+					if (nobj.containsKey("familyName")) {
 						contact.setLastName(nobj.getString("familyName"));
 					}
-					if (nobj.has("givenName")) {
+					if (nobj.containsKey("givenName")) {
 						contact.setFirstName(nobj.getString("givenName"));
 					}
 				}
 
-				if (pObj.has("profileUrl")) {
+				if (pObj.containsKey("profileUrl")) {
 					contact.setProfileUrl(pObj.getString("profileUrl"));
 				}
-				if (pObj.has("id")) {
+				if (pObj.containsKey("id")) {
 					contact.setId(pObj.getString("id"));
 				}
 				plist.add(contact);
@@ -330,39 +332,40 @@ public class MySpaceImpl extends AbstractProvider {
 			throw new SocialAuthException("Failed to read response from  "
 					+ PROFILE_URL, exc);
 		}
-		JSONObject pObj = new JSONObject();
-		JSONObject jobj = new JSONObject(result);
-		if (jobj.has("person")) {
-			pObj = jobj.getJSONObject("person");
+		JsonObject pObj = Json.createObjectBuilder().build();
+		JsonObject jobj = Json.createReader(new StringReader(result)).readObject();
+		
+		if (jobj.containsKey("person")) {
+			pObj = jobj.getJsonObject("person");
 		} else {
 			throw new ServerDataException(
 					"Failed to parse the user profile json : " + result);
 		}
-		if (pObj.has("displayName")) {
+		if (pObj.containsKey("displayName")) {
 			profile.setDisplayName(pObj.getString("displayName"));
 		}
-		if (pObj.has("id")) {
+		if (pObj.containsKey("id")) {
 			profile.setValidatedId(pObj.getString("id"));
 		}
-		if (pObj.has("name")) {
-			JSONObject nobj = pObj.getJSONObject("name");
-			if (nobj.has("familyName")) {
+		if (pObj.containsKey("name")) {
+			JsonObject nobj = pObj.getJsonObject("name");
+			if (nobj.containsKey("familyName")) {
 				profile.setLastName(nobj.getString("familyName"));
 			}
-			if (nobj.has("givenName")) {
+			if (nobj.containsKey("givenName")) {
 				profile.setFirstName(nobj.getString("givenName"));
 			}
 		}
-		if (pObj.has("location")) {
+		if (pObj.containsKey("location")) {
 			profile.setLocation(pObj.getString("location"));
 		}
-		if (pObj.has("nickname")) {
+		if (pObj.containsKey("nickname")) {
 			profile.setDisplayName(pObj.getString("nickname"));
 		}
-		if (pObj.has("lang")) {
+		if (pObj.containsKey("lang")) {
 			profile.setLanguage(pObj.getString("lang"));
 		}
-		if (pObj.has("thumbnailUrl")) {
+		if (pObj.containsKey("thumbnailUrl")) {
 			profile.setProfileImageURL(pObj.getString("thumbnailUrl"));
 		}
 		profile.setProviderId(getProviderId());

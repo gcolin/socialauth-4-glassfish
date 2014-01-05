@@ -25,10 +25,14 @@
 package org.brickred.socialauth.plugin.facebook;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.Album;
 import org.brickred.socialauth.Photo;
@@ -37,8 +41,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.ProviderSupport;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Album Plugin implementation for Facebook
@@ -67,25 +69,25 @@ public class AlbumsPluginImpl implements AlbumsPlugin, Serializable {
 		String respStr = response.getResponseBodyAsString(Constants.ENCODING);
 		LOG.fine("Albums JSON :: " + respStr);
 		List<Album> albums = new ArrayList<Album>();
-		JSONObject resp = new JSONObject(respStr);
-		JSONArray data = resp.getJSONArray("data");
-		LOG.fine("Albums count : " + data.length());
-		for (int i = 0; i < data.length(); i++) {
+		JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
+		JsonArray data = resp.getJsonArray("data");
+		LOG.fine("Albums count : " + data.size());
+		for (int i = 0; i < data.size(); i++) {
 			Album album = new Album();
-			JSONObject obj = data.getJSONObject(i);
+			JsonObject obj = data.getJsonObject(i);
 			String albumId = obj.getString("id");
 			album.setId(albumId);
-			if (obj.has("name")) {
+			if (obj.containsKey("name")) {
 				album.setName(obj.getString("name"));
 			}
 
-			if (obj.has("link")) {
+			if (obj.containsKey("link")) {
 				album.setLink(obj.getString("link"));
 			}
-			if (obj.has("cover_photo")) {
+			if (obj.containsKey("cover_photo")) {
 				album.setCoverPhoto(obj.getString("cover_photo"));
 			}
-			if (obj.has("count")) {
+			if (obj.containsKey("count")) {
 				album.setPhotosCount(obj.getInt("count"));
 			}
 			album.setCoverPhoto(String.format(ALBUM_COVER_URL, albumId,
@@ -103,32 +105,32 @@ public class AlbumsPluginImpl implements AlbumsPlugin, Serializable {
 				null, null, null);
 		String respStr = response.getResponseBodyAsString(Constants.ENCODING);
 		LOG.info("Getting Photos of Album :: " + id);
-		JSONObject resp = new JSONObject(respStr);
-		JSONArray data = resp.getJSONArray("data");
-		LOG.fine("Photos count : " + data.length());
+		JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
+        JsonArray data = resp.getJsonArray("data");
+		LOG.fine("Photos count : " + data.size());
 		List<Photo> photos = new ArrayList<Photo>();
-		for (int i = 0; i < data.length(); i++) {
+		for (int i = 0; i < data.size(); i++) {
 			Photo photo = new Photo();
-			JSONObject obj = data.getJSONObject(i);
+			JsonObject obj = data.getJsonObject(i);
 			photo.setId(obj.getString("id"));
-			if (obj.has("name")) {
+			if (obj.containsKey("name")) {
 				photo.setTitle(obj.getString("name"));
 			}
-			if (obj.has("link")) {
+			if (obj.containsKey("link")) {
 				photo.setLink(obj.getString("link"));
 			}
-			if (obj.has("picture")) {
+			if (obj.containsKey("picture")) {
 				photo.setThumbImage(obj.getString("picture"));
 			}
-			JSONArray images = obj.getJSONArray("images");
-			for (int k = 0; k < images.length(); k++) {
-				JSONObject img = images.getJSONObject(k);
+			JsonArray images = obj.getJsonArray("images");
+			for (int k = 0; k < images.size(); k++) {
+				JsonObject img = images.getJsonObject(k);
 				int ht = 0;
 				int wt = 0;
-				if (img.has("height")) {
+				if (img.containsKey("height")) {
 					ht = img.getInt("height");
 				}
-				if (img.has("width")) {
+				if (img.containsKey("width")) {
 					wt = img.getInt("width");
 				}
 				if (ht == 600 || wt == 600) {

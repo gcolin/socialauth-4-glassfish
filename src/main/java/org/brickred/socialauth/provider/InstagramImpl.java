@@ -27,13 +27,17 @@ Authors: Konstantinos Psychas / National Technical University of Athens
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -49,8 +53,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for Instagram
@@ -168,28 +170,38 @@ public class InstagramImpl extends AbstractProvider {
 		LOG.fine("Contacts JSON string :: " + respStr);
 		List<Contact> plist = new ArrayList<Contact>();
 
-		JSONObject resp = new JSONObject(respStr);
-		JSONArray data = resp.optJSONArray("data");
-		if (data != null) {
-			for (int i = 0; i < data.length(); i++) {
-				JSONObject obj = data.getJSONObject(i);
+		JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();	
+		if (resp.containsKey("data")) {
+		    JsonArray data = resp.getJsonArray("data");
+			for (int i = 0; i < data.size(); i++) {
+				JsonObject obj = data.getJsonObject(i);
 				Contact p = new Contact();
-				String id = obj.optString("id");
-				p.setId(id);
-				String full_name = obj.optString("full_name");
-				p.setDisplayName(full_name);
-				if (full_name != null) {
-					String[] names = full_name.split(" ");
+				if(obj.containsKey("id"))
+				{
+	                p.setId(obj.getString("id"));
+				}
+				if(obj.containsKey("id"))
+                {
+	                p.setDisplayName(obj.getString("full_name"));
+                }
+				
+				if (p.getDisplayName() != null) {
+					String[] names = p.getDisplayName().split(" ");
 					if (names.length > 1) {
 						p.setFirstName(names[0]);
 						p.setLastName(names[1]);
 					} else {
-						p.setFirstName(full_name);
+						p.setFirstName(p.getDisplayName());
 					}
 				}
-				String username = obj.optString("username");
-				p.setProfileUrl(VIEW_PROFILE_URL + username);
-				p.setProfileImageURL(obj.optString("profile_picture"));
+				if(obj.containsKey("username"))
+                {
+				    p.setProfileUrl(VIEW_PROFILE_URL + obj.getString("username"));
+                }
+				if(obj.containsKey("profile_picture"))
+                {
+				    p.setProfileImageURL(obj.getString("profile_picture"));
+                }
 				plist.add(p);
 			}
 		}
@@ -231,22 +243,30 @@ public class InstagramImpl extends AbstractProvider {
 			String respStr = response
 					.getResponseBodyAsString(Constants.ENCODING);
 			LOG.fine("Profile JSON string :: " + respStr);
-			JSONObject obj = new JSONObject(respStr);
-			JSONObject data = obj.getJSONObject("data");
+			JsonObject obj = Json.createReader(new StringReader(respStr)).readObject();
+			JsonObject data = obj.getJsonObject("data");
 			Profile p = new Profile();
-			p.setValidatedId(data.optString("id"));
-			String full_name = data.optString("full_name");
-			p.setDisplayName(full_name);
-			if (full_name != null) {
-				String[] names = full_name.split(" ");
+			if(data.containsKey("id"))
+			{
+			    p.setValidatedId(data.getString("id"));
+			}
+			if(data.containsKey("full_name"))
+            {
+                p.setDisplayName(data.getString("full_name"));
+            }
+			if (p.getDisplayName() != null) {
+				String[] names = p.getDisplayName().split(" ");
 				if (names.length > 1) {
 					p.setFirstName(names[0]);
 					p.setLastName(names[1]);
 				} else {
-					p.setFirstName(full_name);
+					p.setFirstName(p.getDisplayName());
 				}
 			}
-			p.setProfileImageURL(data.optString("profile_picture"));
+			if(data.containsKey("profile_picture"))
+            {
+                p.setProfileImageURL(data.getString("profile_picture"));
+            }
 			p.setProviderId(getProviderId());
 			return p;
 		} else {

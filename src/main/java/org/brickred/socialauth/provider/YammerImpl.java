@@ -27,6 +27,7 @@ package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -35,8 +36,11 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.AuthProvider;
@@ -58,8 +62,6 @@ import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
 import org.brickred.socialauth.util.SocialAuthUtil;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 public class YammerImpl extends AbstractProvider implements AuthProvider,
 		Serializable {
@@ -204,8 +206,8 @@ public class YammerImpl extends AbstractProvider implements AuthProvider,
 							+ "The server running the application should be same that was registered to get the keys.");
 		}
 
-		JSONObject resp = new JSONObject(result);
-		JSONObject accessTokenObject = resp.getJSONObject("access_token");
+		JsonObject resp = Json.createReader(new StringReader(result)).readObject();
+		JsonObject accessTokenObject = resp.getJsonObject("access_token");
 		accessToken = accessTokenObject.getString("token");
 		LOG.fine("Access Token : " + accessToken);
 
@@ -219,7 +221,7 @@ public class YammerImpl extends AbstractProvider implements AuthProvider,
 				accessGrant.setPermission(Permission.ALL);
 			}
 
-			if (accessTokenObject.has("user_id")) {
+			if (accessTokenObject.containsKey("user_id")) {
 				profileId = accessTokenObject.getString("user_id");
 			}
 			accessGrant.setAttribute("profileId", profileId);
@@ -261,17 +263,17 @@ public class YammerImpl extends AbstractProvider implements AuthProvider,
 		}
 		try {
 			LOG.fine("User Contacts list in json : " + respStr);
-			JSONArray resp = new JSONArray(respStr);
-			for (int i = 0; i < resp.length(); i++) {
-				JSONObject obj = resp.getJSONObject(i);
+			JsonArray resp = Json.createReader(new StringReader(respStr)).readArray();
+			for (int i = 0; i < resp.size(); i++) {
+				JsonObject obj = resp.getJsonObject(i);
 				Contact p = new Contact();
 				String name = obj.getString("full_name");
 				p.setDisplayName(name);
-				JSONObject userContactDetails = obj.getJSONObject("contact");
-				JSONArray emailArr = userContactDetails
-						.getJSONArray("email_addresses");
-				JSONObject eobj = emailArr.getJSONObject(0);
-				if (eobj.has("address")) {
+				JsonObject userContactDetails = obj.getJsonObject("contact");
+				JsonArray emailArr = userContactDetails
+						.getJsonArray("email_addresses");
+				JsonObject eobj = emailArr.getJsonObject(0);
+				if (eobj.containsKey("address")) {
 					p.setEmail(eobj.getString("address"));
 				}
 				p.setId(obj.getString("id"));
@@ -370,17 +372,17 @@ public class YammerImpl extends AbstractProvider implements AuthProvider,
 					+ profileURL, e);
 		}
 		try {
-			JSONObject resp = new JSONObject(result);
-			if (resp.has("full_name")) {
+			JsonObject resp = Json.createReader(new StringReader(result)).readObject();
+			if (resp.containsKey("full_name")) {
 				p.setFullName(resp.getString("full_name"));
 			}
-			if (resp.has("location")) {
+			if (resp.containsKey("location")) {
 				p.setLocation(resp.getString("location"));
 			}
-			if (resp.has("mugshot_url")) {
+			if (resp.containsKey("mugshot_url")) {
 				p.setProfileImageURL(resp.getString("mugshot_url"));
 			}
-			if (resp.has("birth_date")) {
+			if (resp.containsKey("birth_date")) {
 				String dstr = resp.getString("birth_date");
 				if (dstr != null) {
 					String arr[] = dstr.split("\\s+");
@@ -401,12 +403,12 @@ public class YammerImpl extends AbstractProvider implements AuthProvider,
 					p.setDob(bd);
 				}
 			}
-			JSONObject userContactDetails = resp.getJSONObject("contact");
-			JSONArray emailArr = userContactDetails
-					.getJSONArray("email_addresses");
+			JsonObject userContactDetails = resp.getJsonObject("contact");
+			JsonArray emailArr = userContactDetails
+					.getJsonArray("email_addresses");
 
-			JSONObject eobj = emailArr.getJSONObject(0);
-			if (eobj.has("address")) {
+			JsonObject eobj = emailArr.getJsonObject(0);
+			if (eobj.containsKey("address")) {
 				p.setEmail(eobj.getString("address"));
 			}
 

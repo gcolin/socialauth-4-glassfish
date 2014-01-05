@@ -26,13 +26,16 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -49,7 +52,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for GitHub
@@ -159,22 +161,22 @@ public class GitHubImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Profile : " + presp);
-			JSONObject resp = new JSONObject(presp);
+			JsonObject resp = Json.createReader(new StringReader(presp)).readObject();
 			Profile p = new Profile();
 			p.setValidatedId(resp.getString("id"));
-			if (resp.has("name")) {
+			if (resp.containsKey("name")) {
 				p.setFullName(resp.getString("name"));
 			}
-			if (resp.has("email")) {
+			if (resp.containsKey("email")) {
 				String email = resp.getString("email");
 				if (!"null".equals(email)) {
 					p.setEmail(resp.getString("email"));
 				}
 			}
-			if (resp.has("location")) {
+			if (resp.containsKey("location")) {
 				p.setLocation(resp.getString("location"));
 			}
-			if (resp.has("avatar_url")) {
+			if (resp.containsKey("avatar_url")) {
 				p.setProfileImageURL(resp.getString("avatar_url"));
 			}
 			p.setProviderId(getProviderId());

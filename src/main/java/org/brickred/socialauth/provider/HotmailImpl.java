@@ -26,13 +26,17 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -50,8 +54,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Implementation of Hotmail provider. This implementation is based on the
@@ -231,30 +233,30 @@ public class HotmailImpl extends AbstractProvider {
 					e);
 		}
 		LOG.fine("User Contacts list in JSON " + result);
-		JSONObject resp = new JSONObject(result);
+		JsonObject resp = Json.createReader(new StringReader(result)).readObject();
 		List<Contact> plist = new ArrayList<Contact>();
-		if (resp.has("data")) {
-			JSONArray addArr = resp.getJSONArray("data");
-			LOG.fine("Contacts Found : " + addArr.length());
-			for (int i = 0; i < addArr.length(); i++) {
-				JSONObject obj = addArr.getJSONObject(i);
+		if (resp.containsKey("data")) {
+			JsonArray addArr = resp.getJsonArray("data");
+			LOG.fine("Contacts Found : " + addArr.size());
+			for (int i = 0; i < addArr.size(); i++) {
+				JsonObject obj = addArr.getJsonObject(i);
 				Contact p = new Contact();
-				if (obj.has("email_hashes")) {
-					JSONArray emailArr = obj.getJSONArray("email_hashes");
-					if (emailArr.length() > 0) {
+				if (obj.containsKey("email_hashes")) {
+					JsonArray emailArr = obj.getJsonArray("email_hashes");
+					if (emailArr.size() > 0) {
 						p.setEmailHash(emailArr.getString(0));
 					}
 				}
-				if (obj.has("name")) {
+				if (obj.containsKey("name")) {
 					p.setDisplayName(obj.getString("name"));
 				}
-				if (obj.has("first_name")) {
+				if (obj.containsKey("first_name")) {
 					p.setFirstName(obj.getString("first_name"));
 				}
-				if (obj.has("last_name")) {
+				if (obj.containsKey("last_name")) {
 					p.setLastName(obj.getString("last_name"));
 				}
-				if (obj.has("id")) {
+				if (obj.containsKey("id")) {
 					p.setId(obj.getString("id"));
 				}
 				plist.add(p);
@@ -327,57 +329,57 @@ public class HotmailImpl extends AbstractProvider {
 					+ PROFILE_URL, e);
 		}
 		try {
-			JSONObject resp = new JSONObject(result);
-			if (resp.has("id")) {
+			JsonObject resp = Json.createReader(new StringReader(result)).readObject();
+			if (resp.containsKey("id")) {
 				p.setValidatedId(resp.getString("id"));
 			}
-			if (resp.has("name")) {
+			if (resp.containsKey("name")) {
 				p.setFullName(resp.getString("name"));
 			}
-			if (resp.has("first_name")) {
+			if (resp.containsKey("first_name")&&!resp.isNull("first_name")) {
 				p.setFirstName(resp.getString("first_name"));
 			}
-			if (resp.has("last_name")) {
+			if (resp.containsKey("last_name")&&!resp.isNull("last_name")) {
 				p.setLastName(resp.getString("last_name"));
 			}
-			if (resp.has("Location")) {
+			if (resp.containsKey("Location")&&!resp.isNull("Location")) {
 				p.setLocation(resp.getString("Location"));
 			}
-			if (resp.has("gender")) {
+			if (resp.containsKey("gender")&&!resp.isNull("gender")) {
 				p.setGender(resp.getString("gender"));
 			}
-			if (resp.has("ThumbnailImageLink")) {
+			if (resp.containsKey("ThumbnailImageLink")&&!resp.isNull("ThumbnailImageLink")) {
 				p.setProfileImageURL(resp.getString("ThumbnailImageLink"));
 			}
 
-			if (resp.has("birth_day") && !resp.isNull("birth_day")) {
+			if (resp.containsKey("birth_day") && !resp.isNull("birth_day")) {
 				BirthDate bd = new BirthDate();
 				bd.setDay(resp.getInt("birth_day"));
-				if (resp.has("birth_month") && !resp.isNull("birth_month")) {
+				if (resp.containsKey("birth_month") && !resp.isNull("birth_month")) {
 					bd.setMonth(resp.getInt("birth_month"));
 				}
-				if (resp.has("birth_year") && !resp.isNull("birth_year")) {
+				if (resp.containsKey("birth_year") && !resp.isNull("birth_year")) {
 					bd.setYear(resp.getInt("birth_year"));
 				}
 				p.setDob(bd);
 			}
 
-			if (resp.has("emails")) {
-				JSONObject eobj = resp.getJSONObject("emails");
+			if (resp.containsKey("emails")&&!resp.isNull("emails")) {
+				JsonObject eobj = resp.getJsonObject("emails");
 				String email = null;
-				if (eobj.has("preferred")) {
+				if (eobj.containsKey("preferred")) {
 					email = eobj.getString("preferred");
 				}
-				if ((email == null || email.isEmpty()) && eobj.has("account")) {
+				if ((email == null || email.isEmpty()) && eobj.containsKey("account")) {
 					email = eobj.getString("account");
 				}
-				if ((email == null || email.isEmpty()) && eobj.has("personal")) {
+				if ((email == null || email.isEmpty()) && eobj.containsKey("personal")) {
 					email = eobj.getString("personal");
 				}
 				p.setEmail(email);
 
 			}
-			if (resp.has("locale")) {
+			if (resp.containsKey("locale")&&!resp.isNull("locale")) {
 				p.setLanguage(resp.getString("locale"));
 			}
 			serviceResponse.close();

@@ -27,13 +27,16 @@ package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.AuthProvider;
@@ -50,7 +53,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for SalesForce
@@ -268,14 +270,14 @@ public class SalesForceImpl extends AbstractProvider implements AuthProvider,
 					+ profileURL, e);
 		}
 		try {
-			JSONObject resp = new JSONObject(result);
-			if (resp.has("user_id")) {
+			JsonObject resp = Json.createReader(new StringReader(result)).readObject();
+			if (resp.containsKey("user_id")) {
 				p.setValidatedId(resp.getString("user_id"));
 			}
-			if (resp.has("first_name")) {
+			if (resp.containsKey("first_name")) {
 				p.setFirstName(resp.getString("first_name"));
 			}
-			if (resp.has("last_name")) {
+			if (resp.containsKey("last_name")) {
 				p.setLastName(resp.getString("last_name"));
 			}
 			p.setDisplayName(resp.getString("display_name"));
@@ -287,8 +289,8 @@ public class SalesForceImpl extends AbstractProvider implements AuthProvider,
 				p.setLanguage(a[0]);
 				p.setCountry(a[1]);
 			}
-			if (resp.has("photos")) {
-				JSONObject photosResp = resp.getJSONObject("photos");
+			if (resp.containsKey("photos")) {
+				JsonObject photosResp = resp.getJsonObject("photos");
 
 				if (p.getProfileImageURL() == null
 						|| p.getProfileImageURL().length() <= 0) {

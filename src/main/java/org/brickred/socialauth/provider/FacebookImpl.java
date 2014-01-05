@@ -26,14 +26,18 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -52,8 +56,6 @@ import org.brickred.socialauth.util.HttpUtil;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for Facebook
@@ -207,25 +209,25 @@ public class FacebookImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Profile : " + presp);
-			JSONObject resp = new JSONObject(presp);
+			JsonObject resp = Json.createReader(new StringReader(presp)).readObject();
 			Profile p = new Profile();
 			p.setValidatedId(resp.getString("id"));
-			if (resp.has("name")) {
+			if (resp.containsKey("name")&&!resp.isNull("name")) {
 				p.setFullName(resp.getString("name"));
 			}
-			if (resp.has("first_name")) {
+			if (resp.containsKey("first_name")&&!resp.isNull("first_name")) {
 				p.setFirstName(resp.getString("first_name"));
 			}
-			if (resp.has("last_name")) {
+			if (resp.containsKey("last_name")&&!resp.isNull("last_name")) {
 				p.setLastName(resp.getString("last_name"));
 			}
-			if (resp.has("email")) {
+			if (resp.containsKey("email")&&!resp.isNull("email")) {
 				p.setEmail(resp.getString("email"));
 			}
-			if (resp.has("location")) {
-				p.setLocation(resp.getJSONObject("location").getString("name"));
+			if (resp.containsKey("location")&&!resp.isNull("location")) {
+				p.setLocation(resp.getJsonObject("location").getString("name"));
 			}
-			if (resp.has("birthday")) {
+			if (resp.containsKey("birthday")&&!resp.isNull("birthday")) {
 				String bstr = resp.getString("birthday");
 				String[] arr = bstr.split("/");
 				BirthDate bd = new BirthDate();
@@ -240,16 +242,18 @@ public class FacebookImpl extends AbstractProvider {
 				}
 				p.setDob(bd);
 			}
-			if (resp.has("gender")) {
+			if (resp.containsKey("gender")&&!resp.isNull("gender")) {
 				p.setGender(resp.getString("gender"));
 			}
 			p.setProfileImageURL(String.format(PROFILE_IMAGE_URL,
 					resp.getString("id")));
-			String locale = resp.getString("locale");
-			if (locale != null) {
-				String a[] = locale.split("_");
-				p.setLanguage(a[0]);
-				p.setCountry(a[1]);
+			if(resp.containsKey("locale")&&!resp.isNull("locale")){
+    			String locale = resp.getString("locale");
+    			if (locale != null) {
+    				String a[] = locale.split("_");
+    				p.setLanguage(a[0]);
+    				p.setCountry(a[1]);
+    			}
 			}
 			p.setProviderId(getProviderId());
 			userProfile = p;
@@ -320,11 +324,11 @@ public class FacebookImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Contacts list in json : " + respStr);
-			JSONObject resp = new JSONObject(respStr);
-			JSONArray data = resp.getJSONArray("data");
-			LOG.fine("Found contacts : " + data.length());
-			for (int i = 0; i < data.length(); i++) {
-				JSONObject obj = data.getJSONObject(i);
+			JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
+			JsonArray data = resp.getJsonArray("data");
+			LOG.fine("Found contacts : " + data.size());
+			for (int i = 0; i < data.size(); i++) {
+				JsonObject obj = data.getJsonObject(i);
 				Contact p = new Contact();
 				String name = obj.getString("name");
 				if (name != null) {
@@ -488,15 +492,15 @@ public class FacebookImpl extends AbstractProvider {
 			try {
 				String respStr = response
 						.getErrorStreamAsString(Constants.ENCODING);
-				JSONObject resp = new JSONObject(respStr);
+				JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
 				/*
 				 * Sampe error response - { "error": { "message": "Error
 				 * validating access token: Session has expired at unix time
 				 * SOME_TIME. The current unix time is
 				 * SOME_TIME.", "type": "OAuthException", "code": 190 } }
 				 */
-				if (resp.has("error")) {
-					JSONObject error = resp.getJSONObject("error");
+				if (resp.containsKey("error")) {
+					JsonObject error = resp.getJsonObject("error");
 					String message = error.getString("message");
 					LOG.fine("Error message :: " + message);
 					if (message != null) {

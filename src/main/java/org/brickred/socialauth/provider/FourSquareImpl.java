@@ -26,13 +26,17 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -47,8 +51,6 @@ import org.brickred.socialauth.util.AccessGrant;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for FourSquare. This uses the oAuth API provided by
@@ -193,42 +195,42 @@ public class FourSquareImpl extends AbstractProvider {
 					+ PROFILE_URL, exc);
 		}
 
-		JSONObject jobj = new JSONObject(res);
-		JSONObject rObj;
-		JSONObject uObj;
-		if (jobj.has("response")) {
-			rObj = jobj.getJSONObject("response");
+		JsonObject jobj = Json.createReader(new StringReader(res)).readObject();
+		JsonObject rObj;
+		JsonObject uObj;
+		if (jobj.containsKey("response")) {
+			rObj = jobj.getJsonObject("response");
 		} else {
 			throw new SocialAuthException(
 					"Failed to parse the user profile json : " + res);
 		}
-		if (rObj.has("user")) {
-			uObj = rObj.getJSONObject("user");
+		if (rObj.containsKey("user")) {
+			uObj = rObj.getJsonObject("user");
 		} else {
 			throw new SocialAuthException(
 					"Failed to parse the user profile json : " + res);
 		}
-		if (uObj.has("id")) {
+		if (uObj.containsKey("id")) {
 			profile.setValidatedId(uObj.getString("id"));
 		}
-		if (uObj.has("firstName")) {
+		if (uObj.containsKey("firstName")&&!uObj.isNull("firstName")) {
 			profile.setFirstName(uObj.getString("firstName"));
 		}
-		if (uObj.has("lastName")) {
+		if (uObj.containsKey("lastName")&&!uObj.isNull("lastName")) {
 			profile.setLastName(uObj.getString("lastName"));
 		}
-		if (uObj.has("photo")) {
+		if (uObj.containsKey("photo")&&!uObj.isNull("photo")) {
 			profile.setProfileImageURL(uObj.getString("photo"));
 		}
-		if (uObj.has("gender")) {
+		if (uObj.containsKey("gender")&&!uObj.isNull("gender")) {
 			profile.setGender(uObj.getString("gender"));
 		}
-		if (uObj.has("homeCity")) {
+		if (uObj.containsKey("homeCity")&&!uObj.isNull("homeCity")) {
 			profile.setLocation(uObj.getString("homeCity"));
 		}
-		if (uObj.has("contact")) {
-			JSONObject cobj = uObj.getJSONObject("contact");
-			if (cobj.has("email")) {
+		if (uObj.containsKey("contact")) {
+			JsonObject cobj = uObj.getJsonObject("contact");
+			if (cobj.containsKey("email")&&!cobj.isNull("email")) {
 				profile.setEmail(cobj.getString("email"));
 			}
 		}
@@ -268,15 +270,15 @@ public class FourSquareImpl extends AbstractProvider {
 					+ CONTACTS_URL, exc);
 		}
 		LOG.fine("User Contacts list in JSON " + respStr);
-		JSONObject resp = new JSONObject(respStr);
+		JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
 		List<Contact> plist = new ArrayList<Contact>();
-		JSONArray items = new JSONArray();
-		if (resp.has("response")) {
-			JSONObject robj = resp.getJSONObject("response");
-			if (robj.has("friends")) {
-				JSONObject fobj = robj.getJSONObject("friends");
-				if (fobj.has("items")) {
-					items = fobj.getJSONArray("items");
+		JsonArray items = Json.createArrayBuilder().build();
+		if (resp.containsKey("response")) {
+			JsonObject robj = resp.getJsonObject("response");
+			if (robj.containsKey("friends")) {
+				JsonObject fobj = robj.getJsonObject("friends");
+				if (fobj.containsKey("items")) {
+					items = fobj.getJsonArray("items");
 				}
 			} else {
 				throw new SocialAuthException(
@@ -286,21 +288,21 @@ public class FourSquareImpl extends AbstractProvider {
 			throw new SocialAuthException(
 					"Failed to parse the user profile json : " + respStr);
 		}
-		LOG.fine("Contacts Found : " + items.length());
-		for (int i = 0; i < items.length(); i++) {
-			JSONObject obj = items.getJSONObject(i);
+		LOG.fine("Contacts Found : " + items.size());
+		for (int i = 0; i < items.size(); i++) {
+			JsonObject obj = items.getJsonObject(i);
 			Contact c = new Contact();
-			if (obj.has("firstName")) {
+			if (obj.containsKey("firstName")) {
 				c.setFirstName(obj.getString("firstName"));
 			}
-			if (obj.has("lastName")) {
+			if (obj.containsKey("lastName")) {
 				c.setLastName(obj.getString("lastName"));
 			}
-			if (obj.has("id")) {
+			if (obj.containsKey("id")) {
 				c.setProfileUrl(VIEW_PROFILE_URL + obj.getString("id"));
 				c.setId(obj.getString("id"));
 			}
-			if (obj.has("photo")) {
+			if (obj.containsKey("photo")) {
 				String photo = obj.getString("photo");
 				if (photo.length() > 1) {
 					c.setProfileImageURL(photo);

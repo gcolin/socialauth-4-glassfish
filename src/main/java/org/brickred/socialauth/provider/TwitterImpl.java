@@ -27,15 +27,19 @@ package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import java.util.logging.Logger;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.AuthProvider;
@@ -53,8 +57,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Twitter implementation of the provider.
@@ -214,23 +216,23 @@ public class TwitterImpl extends AbstractProvider implements AuthProvider,
 					+ url, exc);
 		}
 		try {
-			JSONObject pObj = new JSONObject(result);
-			if (pObj.has("id_str")) {
+			JsonObject pObj = Json.createReader(new StringReader(result)).readObject();
+			if (pObj.containsKey("id_str")) {
 				profile.setValidatedId(pObj.getString("id_str"));
 			}
-			if (pObj.has("name")) {
+			if (pObj.containsKey("name")) {
 				profile.setFullName(pObj.getString("name"));
 			}
-			if (pObj.has("location")) {
+			if (pObj.containsKey("location")) {
 				profile.setLocation(pObj.getString("location"));
 			}
-			if (pObj.has("screen_name")) {
+			if (pObj.containsKey("screen_name")) {
 				profile.setDisplayName(pObj.getString("screen_name"));
 			}
-			if (pObj.has("lang")) {
+			if (pObj.containsKey("lang")) {
 				profile.setLanguage(pObj.getString("lang"));
 			}
-			if (pObj.has("profile_image_url")) {
+			if (pObj.containsKey("profile_image_url")) {
 				profile.setProfileImageURL(pObj.getString("profile_image_url"));
 			}
 			profile.setProviderId(getProviderId());
@@ -315,12 +317,12 @@ public class TwitterImpl extends AbstractProvider implements AuthProvider,
 		}
 		LOG.fine("User friends ids : " + result);
 		try {
-			JSONObject jobj = new JSONObject(result);
-			if (jobj.has("ids")) {
-				JSONArray idList = jobj.getJSONArray("ids");
-				int flength = idList.length();
+			JsonObject jobj = Json.createReader(new StringReader(result)).readObject();
+			if (jobj.containsKey("ids")) {
+				JsonArray idList = jobj.getJsonArray("ids");
+				int flength = idList.size();
 				int ids[] = new int[flength];
-				for (int i = 0; i < idList.length(); i++) {
+				for (int i = 0; i < idList.size(); i++) {
 					ids[i] = idList.getInt(i);
 				}
 				if (flength > 0) {
@@ -381,20 +383,22 @@ public class TwitterImpl extends AbstractProvider implements AuthProvider,
 		}
 		LOG.fine("Users info : " + result);
 		try {
-			JSONArray jarr = new JSONArray(result);
-			for (int i = 0; i < jarr.length(); i++) {
-				JSONObject jobj = jarr.getJSONObject(i);
+			JsonArray jarr = Json.createReader(new StringReader(result)).readArray();
+			for (int i = 0; i < jarr.size(); i++) {
+				JsonObject jobj = jarr.getJsonObject(i);
 				Contact cont = new Contact();
-				if (jobj.has("name")) {
+				if (jobj.containsKey("name")) {
 					cont.setFirstName(jobj.getString("name"));
 				}
-				if (jobj.has("screen_name")) {
+				if (jobj.containsKey("screen_name")) {
 					cont.setDisplayName(jobj.getString("screen_name"));
 					cont.setProfileUrl("http://" + PROPERTY_DOMAIN + "/"
 							+ jobj.getString("screen_name"));
 				}
-				cont.setProfileImageURL(jobj.optString("profile_image_url"));
-				if (jobj.has("id_str")) {
+				if (jobj.containsKey("profile_image_url")) {
+				    cont.setProfileImageURL(jobj.getString("profile_image_url"));
+				}
+				if (jobj.containsKey("id_str")) {
 					cont.setId(jobj.getString("id_str"));
 				}
 				plist.add(cont);

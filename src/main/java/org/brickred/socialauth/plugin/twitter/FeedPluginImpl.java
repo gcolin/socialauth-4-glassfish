@@ -25,12 +25,16 @@
 package org.brickred.socialauth.plugin.twitter;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.Feed;
 import org.brickred.socialauth.exception.SocialAuthException;
@@ -38,8 +42,6 @@ import org.brickred.socialauth.plugin.FeedPlugin;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.ProviderSupport;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Feed Plugin implementation for Twitter
@@ -77,27 +79,27 @@ public class FeedPluginImpl implements FeedPlugin, Serializable {
 			String respStr = response
 					.getResponseBodyAsString(Constants.ENCODING);
 			LOG.fine("Feeds json string :: " + respStr);
-			JSONArray jarr = new JSONArray(respStr);
-			LOG.fine("Feeds count :: " + jarr.length());
-			for (int i = 0; i < jarr.length(); i++) {
-				JSONObject jobj = jarr.getJSONObject(i);
+			JsonArray jarr = Json.createReader(new StringReader(respStr)).readArray();
+			LOG.fine("Feeds count :: " + jarr.size());
+			for (int i = 0; i < jarr.size(); i++) {
+				JsonObject jobj = jarr.getJsonObject(i);
 				Feed feed = new Feed();
-				if (jobj.has("created_at")) {
+				if (jobj.containsKey("created_at")) {
 					String dateStr = jobj.getString("created_at");
 					feed.setCreatedAt(dateFormat.parse(dateStr));
 				}
-				if (jobj.has("text")) {
+				if (jobj.containsKey("text")) {
 					feed.setMessage(jobj.getString("text"));
 				}
-				if (jobj.has("user")) {
-					JSONObject userObj = jobj.getJSONObject("user");
-					if (userObj.has("id_str")) {
+				if (jobj.containsKey("user")) {
+					JsonObject userObj = jobj.getJsonObject("user");
+					if (userObj.containsKey("id_str")) {
 						feed.setId(userObj.getString("id_str"));
 					}
-					if (userObj.has("name")) {
+					if (userObj.containsKey("name")) {
 						feed.setFrom(userObj.getString("name"));
 					}
-					if (userObj.has("screen_name")) {
+					if (userObj.containsKey("screen_name")) {
 						feed.setScreenName(userObj.getString("screen_name"));
 					}
 				}

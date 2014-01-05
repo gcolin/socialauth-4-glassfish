@@ -26,6 +26,7 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -35,8 +36,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -54,7 +57,6 @@ import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Provider implementation for Runkeeper
@@ -192,22 +194,22 @@ public class RunkeeperImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Profile : " + presp);
-			JSONObject resp = new JSONObject(presp);
+			JsonObject resp = Json.createReader(new StringReader(presp)).readObject();
 			Profile p = new Profile();
-			if (resp.has("profile")) {
+			if (resp.containsKey("profile")) {
 				String purl = resp.getString("profile");
 				String parr[] = purl.split("/");
 				p.setValidatedId(parr[parr.length - 1]);
 			}
-			if (resp.has("name")) {
+			if (resp.containsKey("name")) {
 				p.setFirstName(resp.getString("name"));
 				p.setFullName(resp.getString("name"));
 			}
 
-			if (resp.has("location")) {
+			if (resp.containsKey("location")) {
 				p.setLocation(resp.getString("location"));
 			}
-			if (resp.has("birthday")) {
+			if (resp.containsKey("birthday")) {
 				String bstr = resp.getString("birthday");
 				if (bstr != null) {
 					if (bstr.matches("[A-Za-z]{3}, \\d{1,2} [A-Za-z]{3} \\d{4} \\d{2}:\\d{2}:\\d{2}")) {
@@ -224,10 +226,10 @@ public class RunkeeperImpl extends AbstractProvider {
 					}
 				}
 			}
-			if (resp.has("gender")) {
+			if (resp.containsKey("gender")) {
 				p.setGender(resp.getString("gender"));
 			}
-			if (resp.has("normal_picture")) {
+			if (resp.containsKey("normal_picture")) {
 				p.setProfileImageURL(resp.getString("normal_picture"));
 			}
 			p.setProviderId(getProviderId());

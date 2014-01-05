@@ -26,13 +26,16 @@
 package org.brickred.socialauth.provider;
 
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.AbstractProvider;
 import org.brickred.socialauth.Contact;
@@ -50,7 +53,6 @@ import org.brickred.socialauth.util.MethodType;
 import org.brickred.socialauth.util.OAuthConfig;
 import org.brickred.socialauth.util.Response;
 import org.brickred.socialauth.util.XMLParseUtil;
-import org.codehaus.jettison.json.JSONObject;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -206,28 +208,28 @@ public class GooglePlusImpl extends AbstractProvider {
 		}
 		try {
 			LOG.fine("User Profile : " + presp);
-			JSONObject resp = new JSONObject(presp);
+			JsonObject resp = Json.createReader(new StringReader(presp)).readObject();
 			Profile p = new Profile();
 			p.setValidatedId(resp.getString("id"));
-			if (resp.has("name")) {
+			if (resp.containsKey("name")) {
 				p.setFullName(resp.getString("name"));
 			}
-			if (resp.has("given_name")) {
+			if (resp.containsKey("given_name")) {
 				p.setFirstName(resp.getString("given_name"));
 			}
-			if (resp.has("family_name")) {
+			if (resp.containsKey("family_name")) {
 				p.setLastName(resp.getString("family_name"));
 			}
-			if (resp.has("email")) {
+			if (resp.containsKey("email")) {
 				p.setEmail(resp.getString("email"));
 			}
-			if (resp.has("gender")) {
+			if (resp.containsKey("gender")) {
 				p.setGender(resp.getString("gender"));
 			}
-			if (resp.has("picture")) {
+			if (resp.containsKey("picture")) {
 				p.setProfileImageURL(resp.getString("picture"));
 			}
-			if (resp.has("id")) {
+			if (resp.containsKey("id")) {
 				p.setValidatedId(resp.getString("id"));
 			}
 

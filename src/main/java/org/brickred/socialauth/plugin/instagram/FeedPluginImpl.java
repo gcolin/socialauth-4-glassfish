@@ -27,11 +27,15 @@
 package org.brickred.socialauth.plugin.instagram;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.Feed;
 import org.brickred.socialauth.exception.SocialAuthException;
@@ -39,8 +43,6 @@ import org.brickred.socialauth.plugin.FeedPlugin;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.ProviderSupport;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 public class FeedPluginImpl implements FeedPlugin, Serializable {
 
@@ -71,32 +73,32 @@ public class FeedPluginImpl implements FeedPlugin, Serializable {
 			String respStr = response
 					.getResponseBodyAsString(Constants.ENCODING);
 			LOG.fine("Feed Json response :: " + respStr);
-			JSONObject resp = new JSONObject(respStr);
-			JSONArray data = resp.getJSONArray("data");
-			LOG.fine("Feeds count : " + data.length());
-			for (int i = 0; i < data.length(); i++) {
+			JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
+            JsonArray data = resp.getJsonArray("data");
+			LOG.fine("Feeds count : " + data.size());
+			for (int i = 0; i < data.size(); i++) {
 				Feed feed = new Feed();
-				JSONObject obj = data.getJSONObject(i);
-				if (obj.has("images")) {
-					JSONObject iobj = obj.getJSONObject("images");
-					if (iobj.has("low_resolution")) {
-						feed.setMessage(iobj.getJSONObject("low_resolution")
-								.optString("url"));
+				JsonObject obj = data.getJsonObject(i);
+				if (obj.containsKey("images")) {
+					JsonObject iobj = obj.getJsonObject("images");
+					if (iobj.containsKey("low_resolution")) {
+						feed.setMessage(iobj.getJsonObject("low_resolution")
+								.getString("url"));
 					}
 				}
-				if (obj.has("user")) {
-					JSONObject iobj = obj.getJSONObject("user");
-					if (iobj.has("full_name")) {
+				if (obj.containsKey("user")) {
+				    JsonObject iobj = obj.getJsonObject("user");
+					if (iobj.containsKey("full_name")) {
 						feed.setFrom(iobj.getString("full_name"));
 					}
-					if (iobj.has("id")) {
+					if (iobj.containsKey("id")) {
 						feed.setId(iobj.getString("id"));
 					}
-					if (iobj.has("username")) {
+					if (iobj.containsKey("username")) {
 						feed.setScreenName(iobj.getString("username"));
 					}
 				}
-				if (obj.has("created_time")) {
+				if (obj.containsKey("created_time")) {
 					feed.setCreatedAt(new Date(Integer.parseInt(obj
 							.getString("created_time"))));
 				}

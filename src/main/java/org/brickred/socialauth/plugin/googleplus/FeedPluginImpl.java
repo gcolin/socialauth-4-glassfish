@@ -25,14 +25,18 @@
 package org.brickred.socialauth.plugin.googleplus;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 
 import org.brickred.socialauth.Feed;
 import org.brickred.socialauth.exception.SocialAuthException;
@@ -40,8 +44,6 @@ import org.brickred.socialauth.plugin.FeedPlugin;
 import org.brickred.socialauth.util.Constants;
 import org.brickred.socialauth.util.ProviderSupport;
 import org.brickred.socialauth.util.Response;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
 
 /**
  * Feed Plugin implementation for GooglePlus
@@ -83,29 +85,28 @@ public class FeedPluginImpl implements FeedPlugin, Serializable {
 			String respStr = response
 					.getResponseBodyAsString(Constants.ENCODING);
 			System.out.println(respStr);
-			JSONObject resp = new JSONObject(respStr);
-			JSONArray items = resp.getJSONArray("items");
-			LOG.fine("Feeds count : " + items.length());
-			for (int i = 0; i < items.length(); i++) {
+			JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
+            JsonArray items = resp.getJsonArray("items");
+			LOG.fine("Feeds count : " + items.size());
+			for (int i = 0; i < items.size(); i++) {
 				Feed feed = new Feed();
-				JSONObject obj = items.getJSONObject(i);
-				if (obj.has("title")) {
+				JsonObject obj = items.getJsonObject(i);
+				if (obj.containsKey("title")) {
 					feed.setMessage(obj.getString("title"));
 				}
-				if (obj.has("id")) {
+				if (obj.containsKey("id")) {
 					feed.setId(obj.getString("id"));
 				}
-				if (obj.has("actor")) {
-					JSONObject actor = obj.getJSONObject("actor");
-					if (actor.has("displayName")) {
+				if (obj.containsKey("actor")) {
+				    JsonObject actor = obj.getJsonObject("actor");
+					if (actor.containsKey("displayName")) {
 						feed.setFrom(actor.getString("displayName"));
 					}
 				}
-				if (obj.has("published")) {
+				if (obj.containsKey("published")) {
 					Date date = dateFormat.parse(obj.getString("published"));
 					feed.setCreatedAt(date);
 				}
-				System.out.println(feed);
 				list.add(feed);
 			}
 
