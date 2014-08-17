@@ -84,7 +84,6 @@ public class FeedPluginImpl implements FeedPlugin, Serializable {
 			Response response = providerSupport.api(FEED_URL);
 			String respStr = response
 					.getResponseBodyAsString(Constants.ENCODING);
-			System.out.println(respStr);
 			JsonObject resp = Json.createReader(new StringReader(respStr)).readObject();
             JsonArray items = resp.getJsonArray("items");
 			LOG.fine("Feeds count : " + items.size());

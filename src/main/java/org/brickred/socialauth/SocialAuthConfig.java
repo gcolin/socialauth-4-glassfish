@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.brickred.socialauth.exception.SocialAuthConfigurationException;
@@ -179,7 +180,7 @@ public class SocialAuthConfig implements Serializable {
 	 */
 	public void setApplicationProperties(final Properties applicationProperties)
 			throws Exception {
-		LOG.info("Loading application properties");
+		LOG.fine("Loading application properties");
 		this.applicationProperties = applicationProperties;
 		load(this.applicationProperties);
 	}
@@ -216,9 +217,8 @@ public class SocialAuthConfig implements Serializable {
 	 */
 	public void load(final Properties properties) throws Exception {
 		if (!isConfigLoaded) {
-			LOG.info("Loading application configuration");
-			LOG.fine("Loading application configuration through properties. Given properties are :"
-					+ properties);
+			LOG.fine("Loading application configuration");
+			LOG.log(Level.FINE,"Given properties are : {0}",properties);
 			this.applicationProperties = properties;
 			registerProviders();
 			loadProvidersConfig();

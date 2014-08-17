@@ -137,7 +137,6 @@ public class AlbumsPluginImpl implements AlbumsPlugin, Serializable {
 					album.setPhotos(photos);
 
 					albums.add(album);
-					System.out.println(album);
 				}
 			} else {
 				LOG.info("No albums were obtained from : " + ALBUMS_URL);
